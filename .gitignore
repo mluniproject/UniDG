@@ -5,11 +5,14 @@ my/
 venv/
 
 *.pth
-
+data/
 visualization_tsne/
 
 vis_curves/
 
 results/
 
+train_output/
+__pycache__
+.idea/
 *.zip

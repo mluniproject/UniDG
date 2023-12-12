@@ -170,7 +170,7 @@ class RotatedMNIST(MultipleEnvironmentMNIST):
         rotation = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Lambda(lambda x: rotate(x, angle, fill=(0,),
-                                               resample=Image.BICUBIC)),
+                                               interpolation=Image.BICUBIC)),
             transforms.ToTensor()])
 
         x = torch.zeros(len(images), 1, 28, 28)
