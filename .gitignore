@@ -9,7 +9,7 @@ data/
 visualization_tsne/
 
 vis_curves/
-
+new_pretrained_models/
 results/
 
 train_output/

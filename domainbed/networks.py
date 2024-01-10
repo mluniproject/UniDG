@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import torch
+import os
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models
@@ -10,6 +11,7 @@ from domainbed.lib import big_transfer
 from domainbed.lib import vision_transformer
 from domainbed.lib import mlp_mixer
 from domainbed.lib import small_net
+from domainbed.lib import fan
 
 def remove_batch_norm_from_resnet(model):
     fuse = torch.nn.utils.fusion.fuse_conv_bn_eval
@@ -247,6 +249,15 @@ def Featurizer(input_shape, hparams):
         return vision_transformer.CLIP(input_shape, hparams)
     elif input_shape[1:3] == (224, 224) and 'Laion2b_L14' in hparams['backbone']:
         return vision_transformer.Laion2b_L14(input_shape, hparams)
+    elif input_shape[1:3] == (224, 224) and 'FAN' in hparams['backbone']:
+        sub_path = "/new_pretrained_models/fan_hybrid_large/archive/data.pkl"
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        domainbed_dir = os.path.join(current_directory, os.pardir)
+        network_path = os.path.join(domainbed_dir, sub_path)
+
+        network = torch.load(network_path)
+        return network
+        return fan.FAN(input_shape, hparams)
     else:
         raise NotImplementedError
 

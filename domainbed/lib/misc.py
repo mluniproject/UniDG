@@ -104,6 +104,7 @@ def random_pairs_of_minibatches(minibatches):
         pairs.append(((xi[:min_n], yi[:min_n]), (xj[:min_n], yj[:min_n])))
 
     return pairs
+#def random_pairs_domain_minibatches()
 
 def accuracy(network, loader, weights, device):
     correct = 0

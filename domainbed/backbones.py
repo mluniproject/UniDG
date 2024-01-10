@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torchvision.models
 import clip
+import os
+import domainbed
 
 
 def clip_imageencoder(name):
@@ -90,6 +92,15 @@ def get_backbone(name, preserve_readout, pretrained):
             nn.Flatten(1),
         )
         n_outputs = 3024
+    elif name == "FAN":
+        sub_path = "/new_pretrained_models/fan_hybrid_large/archive/data.pkl"
+        current_directory = os.getcwd()
+        
+        domainbed_dir = os.path.join(current_directory, os.pardir)
+        network_path = os.path.join(domainbed_dir, sub_path)
+
+        network = torch.load(network_path)
+        n_outputs = network.output_dim
     else:
         raise ValueError(name)
 
