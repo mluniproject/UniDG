@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.autograd as autograd
+import wandb
 
 import copy
 import numpy as np
@@ -96,6 +97,7 @@ class ERM(Algorithm):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        wandb.log({"loss": loss.item()})
 
         return {'loss': loss.item()}
 

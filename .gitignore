@@ -10,6 +10,7 @@ visualization_tsne/
 
 vis_curves/
 new_pretrained_models/
+wandb/
 results/
 
 train_output/

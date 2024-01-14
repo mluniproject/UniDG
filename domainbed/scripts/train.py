@@ -23,9 +23,11 @@ from domainbed.lib import misc
 from domainbed.lib.fast_data_loader import InfiniteDataLoader, FastDataLoader, DataParallelPassthrough
 from domainbed import model_selection
 from domainbed.lib.query import Q
+import wandb
 
 
 if __name__ == "__main__":
+    wandb.init(project="test")
     parser = argparse.ArgumentParser(description='Domain generalization')
     parser.add_argument('--data_dir', type=str)
     parser.add_argument('--dataset', type=str, default="RotatedMNIST")
@@ -242,6 +244,7 @@ if __name__ == "__main__":
             for name, loader, weights in evals:
                 acc = misc.accuracy(algorithm, loader, weights, device)
                 results[name+'_acc'] = acc
+                wandb.log({name+"test_accuracy": acc})
 
             results_keys = sorted(results.keys())
             if results_keys != last_results_keys:
@@ -276,6 +279,7 @@ if __name__ == "__main__":
             if args.save_model_every_checkpoint:
                 save_checkpoint(f'model_step{step}.pkl')          
     save_checkpoint('model.pkl')
+    wandb.finish()
 
     with open(os.path.join(args.output_dir, 'done'), 'w') as f:
         f.write('done')
