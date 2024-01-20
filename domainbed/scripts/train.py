@@ -246,6 +246,7 @@ if __name__ == "__main__":
                 results[name+'_acc'] = acc
                 wandb.log({name+"test_accuracy": acc})
 
+
             results_keys = sorted(results.keys())
             if results_keys != last_results_keys:
                 misc.print_row(results_keys, colwidth=12)
@@ -257,6 +258,7 @@ if __name__ == "__main__":
                 'hparams': hparams,
                 'args': vars(args)    
             })
+            wandb.log({"parameter_table": str(vars(args))})
 
             epochs_path = os.path.join(args.output_dir, 'results.jsonl')
             with open(epochs_path, 'a') as f:
