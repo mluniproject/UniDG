@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models
-import clip
+#import clip
 import os
 import domainbed
 
