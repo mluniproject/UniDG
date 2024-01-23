@@ -11,7 +11,7 @@ from domainbed.lib import big_transfer
 from domainbed.lib import vision_transformer
 from domainbed.lib import mlp_mixer
 from domainbed.lib import small_net
-from domainbed.lib import fan
+#from domainbed.lib import fan
 
 def remove_batch_norm_from_resnet(model):
     fuse = torch.nn.utils.fusion.fuse_conv_bn_eval
