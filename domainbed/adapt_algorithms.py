@@ -681,6 +681,8 @@ class UniDG(Algorithm):
         # Filter out Top-K 
         indices = []
         indices1 = torch.LongTensor(list(range(len(ent_s))))
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        indices1 = indices1.to(device)
         for i in range(self.num_classes):
             _, indices2 = torch.sort(ent_s[y_hat == i])
             indices.append(indices1[y_hat==i][indices2][:filter_K])
