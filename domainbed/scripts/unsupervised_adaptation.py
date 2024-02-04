@@ -113,7 +113,7 @@ if __name__ == "__main__":
         args.test_batch_size = int(test_batch_size)
     else:
         args.adapt_algorithm = args_in.adapt_algorithm
-        args.test_batch_size = 8  # default
+        args.test_batch_size = 32  # default
     
     base_algo, adapt_dataset, adapt_test_env = args_in.input_dir.split('/')[2], args_in.input_dir.split('/')[-2], args_in.input_dir.split('/')[-1]
     backbone = eval(args.hparams)['backbone']
