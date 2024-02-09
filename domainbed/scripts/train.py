@@ -27,7 +27,7 @@ import wandb
 
 
 if __name__ == "__main__":
-    wandb.init(project="test")
+
     parser = argparse.ArgumentParser(description='Domain generalization')
     parser.add_argument('--data_dir', type=str)
     parser.add_argument('--dataset', type=str, default="RotatedMNIST")
@@ -55,6 +55,8 @@ if __name__ == "__main__":
     parser.add_argument('--save_model_every_checkpoint', action='store_true')
     
     args = parser.parse_args()
+    description = str(args.algorithm) +str(args.test_envs)+ str(args.hparams)
+    wandb.init(project="Uni_DG", name= description)
 
     # If we ever want to implement checkpointing, just persist these values
     # every once in a while, and then load them from disk here.
