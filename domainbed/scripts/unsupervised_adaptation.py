@@ -29,6 +29,7 @@ from domainbed import model_selection
 from domainbed.lib.query import Q
 from domainbed import adapt_algorithms
 import itertools
+import wandb
 
 def mkdir_if_missing(directory):
     if not os.path.exists(directory):
@@ -94,7 +95,6 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', type=str,default="./results")
     parser.add_argument('--adapt_algorithm', type=str, default="UniDG")
     parser.add_argument('--trial_seed', type=str, default="0")
-    
     args_in = parser.parse_args()
     seed = args_in.trial_seed
     epochs_path = os.path.join(args_in.input_dir, 'results.jsonl')
@@ -107,6 +107,8 @@ if __name__ == "__main__":
     args = Namespace(**r['args'])
     print(args)
     args.input_dir = args_in.input_dir
+    description = str(args.adapt_algorithm) + str(args.input_dir)
+    wandb.init(project="Uni_DG", name=description)
 
     if '-' in args_in.adapt_algorithm:
         args.adapt_algorithm, test_batch_size = args_in.adapt_algorithm.split('-')
@@ -279,6 +281,7 @@ if __name__ == "__main__":
     for name, loader, weights in evals:
         acc, ent = accuracy_ent(algorithm, loader, weights, device, adapt=None)
         results[name+'_acc'] = acc
+        wandb.log({name + "_acc": acc})
         results[name+'_ent'] = ent
     results_keys = sorted(results.keys())
     misc.print_row(results_keys, colwidth=12)
@@ -358,6 +361,7 @@ if __name__ == "__main__":
         for name, loader, weights in evals:
             acc, ent = accuracy_ent(adapted_algorithm, loader, weights, device, adapt=True)
             results[name+'_acc'] = acc
+            wandb.log({name + "_acc": acc})
             results[name+'_ent'] = ent
             adapted_algorithm.reset()
 
@@ -380,6 +384,7 @@ if __name__ == "__main__":
             'args': vars(args)    
         })
         # save file
+        wandb.finish()
         epochs_path = os.path.join(args.output_dir, 'results_{}.jsonl'.format(alg_name))
         with open(epochs_path, 'a') as f:
             f.write(json.dumps(results, sort_keys=True) + "\n")
