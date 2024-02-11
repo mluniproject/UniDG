@@ -107,8 +107,8 @@ if __name__ == "__main__":
     args = Namespace(**r['args'])
     print(args)
     args.input_dir = args_in.input_dir
-    description = str(args.adapt_algorithm) + str(args.input_dir)
-    wandb.init(project="Uni_DG", name=description)
+    descriptions = str(args_in.adapt_algorithm) + str(args_in.input_dir)
+    wandb.init(project="Uni_DG", name=descriptions)
 
     if '-' in args_in.adapt_algorithm:
         args.adapt_algorithm, test_batch_size = args_in.adapt_algorithm.split('-')
