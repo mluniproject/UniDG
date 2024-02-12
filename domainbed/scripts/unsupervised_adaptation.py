@@ -368,6 +368,7 @@ if __name__ == "__main__":
         name, loader, weights = train_loader
         acc, ent = accuracy_ent(adapted_algorithm, loader, weights, device, adapt=True)
         results[name+'_acc'] = acc
+        wandb.log({name + "_acc": acc})
         results[name+'_ent'] = ent
 
         del adapt_hparams['cached_loader']
