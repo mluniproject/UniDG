@@ -107,7 +107,7 @@ if __name__ == "__main__":
     args = Namespace(**r['args'])
     print(args)
     args.input_dir = args_in.input_dir
-    description = str(args.adapt_algorithm) + str(args.input_dir)
+    description = str("UniDG") + str(args.input_dir)
     wandb.init(project="Uni_DG", name=description)
 
     if '-' in args_in.adapt_algorithm:
@@ -119,6 +119,7 @@ if __name__ == "__main__":
     
     base_algo, adapt_dataset, adapt_test_env = args_in.input_dir.split('/')[2], args_in.input_dir.split('/')[-2], args_in.input_dir.split('/')[-1]
     backbone = eval(args.hparams)['backbone']
+    print(backbone)
 
     args.output_dir = os.path.join(args_in.output_dir,base_algo,backbone,adapt_dataset,adapt_test_env)
     mkdir_if_missing(args.output_dir)
@@ -385,10 +386,17 @@ if __name__ == "__main__":
             'args': vars(args)    
         })
         # save file
-        wandb.finish()
+
         epochs_path = os.path.join(args.output_dir, 'results_{}.jsonl'.format(alg_name))
         with open(epochs_path, 'a') as f:
             f.write(json.dumps(results, sort_keys=True) + "\n")
+        with open(epochs_path, 'r') as file:
+            for line in file:
+                data = json.loads(line)
+                env_pairs = {key: value for key,value in data.items() if key.startswith('env')}
+                wandb.log(env_pairs)
+            wandb.finish()
+
 
     # create done file
     with open(os.path.join(args.output_dir, 'done_{}'.format(alg_name)), 'w') as f:
