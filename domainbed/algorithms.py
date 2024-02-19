@@ -486,6 +486,7 @@ class Inter_domain_adaptation(Mixup):
                 '''print(x_gpu.shape)
                 print(x.shape)'''
 
+
                 assert x_gpu.shape == x.shape, " X Shapes are not the same"
                 predictions = self.predict(x_gpu)
                 objective += alpha * F.cross_entropy(predictions, y0_tiled)*0.5

@@ -116,7 +116,7 @@ def _hparams(algorithm, dataset, random_seed):
     elif dataset == 'DomainNet':
         _hparam('batch_size', 2, lambda r: int(2**r.uniform(3, 5)) )
     else:
-        _hparam('batch_size', 8, lambda r: int(2**r.uniform(3, 5.5)) )
+        _hparam('batch_size', 4, lambda r: int(2**r.uniform(3, 5.5)) )
 
 
     if algorithm in ['DANN', 'CDANN'] and dataset in SMALL_IMAGES:
