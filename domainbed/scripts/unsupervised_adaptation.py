@@ -341,6 +341,9 @@ if __name__ == "__main__":
         }
     else:
         raise Exception("Not Implemented Error")
+    descriptions = str(args_in.adapt_algorithm) + str(args_in.input_dir) + str("test")
+    wandb.init(project="Uni_DG", name=descriptions)
+
     product = [x for x in itertools.product(*adapt_hparams_dict.values())]
     adapt_hparams_list = [dict(zip(adapt_hparams_dict.keys(), r)) for r in product]
 
@@ -361,7 +364,7 @@ if __name__ == "__main__":
         for name, loader, weights in evals:
             acc, ent = accuracy_ent(adapted_algorithm, loader, weights, device, adapt=True)
             results[name+'_acc'] = acc
-            wandb.log({name + "_acc": acc})
+            wandb.log({name + "eval_acc": acc})
             results[name+'_ent'] = ent
             adapted_algorithm.reset()
 
@@ -384,13 +387,18 @@ if __name__ == "__main__":
             'args': vars(args)    
         })
         # save file
-        wandb.finish()
         epochs_path = os.path.join(args.output_dir, 'results_{}.jsonl'.format(alg_name))
         with open(epochs_path, 'a') as f:
             f.write(json.dumps(results, sort_keys=True) + "\n")
+
 
     # create done file
     with open(os.path.join(args.output_dir, 'done_{}'.format(alg_name)), 'w') as f:
         f.write('done')
 
-        
+    with open(epochs_path, 'r') as file:
+         for line in file:
+            data = json.loads(line)
+            env_pairs = {key: value for key,value in data.items() if key.startswith('env')}               
+            wandb.log(env_pairs)
+         wandb.finish()
