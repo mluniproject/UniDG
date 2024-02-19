@@ -32,6 +32,7 @@ ALGORITHMS = [
     'LISA',
     'CAD',
     'CondCAD',
+    'Inter_domain_adaptation'
 
 ]
 
@@ -66,6 +67,8 @@ class Algorithm(torch.nn.Module):
 
     def predict(self, x):
         raise NotImplementedError
+
+
 
 
 class ERM(Algorithm):
@@ -338,7 +341,7 @@ class VREx(ERM):
         return {'loss': loss.item(), 'nll': nll.item(),
                 'penalty': penalty.item()}
 
-class LISA(ERM):
+'''class LISA(ERM):
     """
     Mixup of minibatches from different domains
     https://arxiv.org/pdf/2001.00677.pdf
@@ -352,10 +355,54 @@ class LISA(ERM):
         objective = 0
 
         for (xi, yi), (xj, yj) in random_pairs_of_minibatches(minibatches):
+            print(xi.shape)
+            #sorted_yi, indices_yi = torch.sort(yi)
+            #merge into one tensor
+            merged_y, indices_merged_y = torch.sort(torch.cat([yi, yj]))
+
+            x_concat = torch.cat([xi, xj])
+            #we generate a permutation of the concation where the inital order is resered
+            permuted_x = torch.index_select(x_concat, dim=0, index=indices_merged_y)
+            even = permuted_x(::2) # 0,2,4
+            larger_val = permuted_x(1:)
+            uneven = permuted_x(1::2) # 1,3,5
+            shifted_by_one =
+
+            res1 = torch.where(even==uneven,1,0)
+            res2 = torch.where(uneven=larger_val,1,0)
+            stack_ed = torch.flatten(torch.stack((res1, res2), dim=1))
+            alpha = 0.5
+            result = (stack_ed*alpha*lower)+(1-alpha)*stack_ed*higher
+            
+            
+            
+
+            
+
+
+            merged_tensor = sorted_yi, indices_yi = torch.sort(yi)
+            sorted_yj, indices_yj = torch.sort(yj)
+            counter_yi = 0
+            counter_yj = 0
+            xi_same = []
+            xi_not_same,yi_not_same = [],[]
+            xj_same = []
+            for x in range(sorted_yi.shape[0]*2):
+                if sorted_yi[counter_yi] == sorted_yj[counter_yj]:
+                    xi_same.append(xi[indices[counter_yi]])
+                    xj_same.append(xj[indices[counter_yj]])
+                    counter_yi += 1
+
+
+                elif sorted_yi[counter_yi] < sorted_yj[counter_yj]:
+                    counter_yi +=1
+                else:
+                    counter_yj +=1
             lam = np.random.beta(self.hparams["mixup_alpha"],
                                  self.hparams["mixup_alpha"])
 
-            x = lam * xi + (1 - lam) * xj
+            x_h = lam * xi_same + (1 - lam) * xj_same
+            x = torch.cat(x_h)
             predictions = self.predict(x)
 
             objective += lam * F.cross_entropy(predictions, yi)
@@ -367,7 +414,7 @@ class LISA(ERM):
         objective.backward()
         self.optimizer.step()
 
-        return {'loss': objective.item()}
+        return {'loss': objective.item()}'''
 class Mixup(ERM):
     """
     Mixup of minibatches from different domains
@@ -398,6 +445,116 @@ class Mixup(ERM):
         self.optimizer.step()
 
         return {'loss': objective.item()}
+class Inter_domain_adaptation(Mixup):
+    def update(self, minibatches, unlabeled=None):
+        # Definition of parameters
+
+        alpha = np.random.beta(self.hparams["mixup_alpha"], self.hparams["mixup_alpha"])
+        objective = 0
+
+        for m in range(len(minibatches)):
+            minibatch = minibatches[m]
+            x, y = minibatch
+
+
+            unique_labels, original_indices = torch.unique(y, return_inverse=True)
+            #unique_labels = torch.cat([y[original_indices[0]].unsqueeze(0), y[original_indices[1]].unsqueeze(0)], dim=0)
+
+            if unique_labels.shape[0] == 1:
+                predictions = self.predict(x)
+                objective += F.cross_entropy(predictions, y)
+            elif unique_labels.shape[0] == 4:
+                reverse_x = torch.flip(x, [0])
+                mixed_x = Inter_domain_adaptation.blend(alpha, x, reverse_x)
+                predictions = self.predict(x)
+                objective += F.cross_entropy(predictions, y)
+            else:
+                weighted_x = Inter_domain_adaptation.blend(alpha, x[original_indices[0]], x[original_indices[1]])
+                labels = unique_labels[:2]
+                y0_tiled = torch.tile(unique_labels[0], (4,))
+                y1_tiled = torch.tile(unique_labels[1], (4,))
+                x_tiled = torch.tile(weighted_x, (4,1,1,1,))
+                '''print(y.shape)
+                print(unique_labels)'''
+
+                assert y[0].shape == unique_labels[0].shape, " Y Shapes are not equal"
+
+
+
+
+                x_gpu, y_gpu = torch.tensor(x_tiled, device=y.device), torch.tensor(y0_tiled, device=y.device)
+                '''print(x_gpu.shape)
+                print(x.shape)'''
+
+                assert x_gpu.shape == x.shape, " X Shapes are not the same"
+                predictions = self.predict(x_gpu)
+                objective += alpha * F.cross_entropy(predictions, y0_tiled)*0.5
+                objective += (1-alpha) * F.cross_entropy(predictions, y1_tiled)*0.5
+
+        objective /= len(minibatches)
+        self.optimizer.zero_grad()
+        objective.backward()
+        self.optimizer.step()
+        wandb.log({"loss": objective.item()})
+        return {'loss': objective.item()}
+
+    def blend(self, first_tensor, second_tensor, alpha=0.5):
+        return alpha * first_tensor + (1 - alpha) * second_tensor
+
+
+
+
+    '''def update(self, minibatches, unlabeled=None):
+
+        # ensure that all of the samples are from the same domain (the same batch)
+        alpha = 1
+        mixed_batches = []
+        objective = 0
+        labels = []
+
+        # Ensure that the tabels are different
+        for m in range(len(minibatches)):
+            minibatch= minibatches[m]
+            x, y = minibatch
+            '
+            alpha = np.random.beta(self.hparams["mixup_alpha"], self.hparams["mixup_alpha"])
+            alpha = 1
+            unique_elem, original_indices = torch.unique(y, return_inverse=True)
+            labels.append(unique_elem)
+            if (unique_elem.shape[0]) == 1:
+                predictions = self.predict(x)
+                objective += 1 * F.cross_entropy(predictions, y)
+            else:  # (unique_elem.shape[0]==2 or unique_elem.shape[0]==3)
+
+
+                weighted_x = Inter_domain_adaptation.blend(alpha, x[original_indices[0]],x[original_indices[1]])
+                labels = torch.cat((y[original_indices[0]], y[original_indices[1]]))
+                multiplication_factor = y.shape[0] // labels.shape[0]
+                y_tiled = torch.tile(labels, (multiplication_factor,))
+                print(y.shape[0])
+                #weighted_x_tiled = torch.tile(weighted_x, (y.shape[0],1,1,1))
+                weighted_x_tiled = weighted_x.to(torch.float32)
+
+
+                y_tiled = y_tiled.to(torch.long)
+                threshold_value = 0.05
+
+                x_gpu,y_gpu = torch.tensor(weighted_x_tiled, device=y.device) , torch.tensor(y_tiled, device=y.device)
+                predictions = self.predict(x_gpu)
+                objective += alpha * F.cross_entropy(predictions, y_tiled[0])
+                objective += (1 - alpha) * F.cross_entropy(predictions, y_tiled[1])
+        objective /= len(minibatches)
+        self.optimizer.zero_grad()
+        objective.backward()
+        self.optimizer.step()
+        wandb.log({"loss": objective.item()})
+        return {'loss': objective.item()}'''
+
+
+
+
+
+
 
 
 class GroupDRO(ERM):
