@@ -3,6 +3,8 @@
 import torch
 import torch.nn as nn
 import torchvision.models
+from transformers import ConvNextV2ForImageClassification, AutoImageProcessor
+import transformers
 #import clip
 import os
 import domainbed
@@ -92,6 +94,9 @@ def get_backbone(name, preserve_readout, pretrained):
             nn.Flatten(1),
         )
         n_outputs = 3024
+    elif name == 'ConvNext2':
+        network = ConvNextV2ForImageClassification.from_pretrained("facebook/convnextv2-tiny-1k-224")
+        n_outputs = network.output_dim
     elif name == "FAN":
         sub_path = "/new_pretrained_models/fan_hybrid_large/archive/data.pkl"
         current_directory = os.getcwd()

@@ -241,6 +241,8 @@ def Featurizer(input_shape, hparams):
         return small_net.EfficientNetV2(input_shape, hparams)
     elif input_shape[1:3] == (224, 224) and 'SwinT' in hparams['backbone']:
         return vision_transformer.SwinT(input_shape, hparams)
+    elif input_shape[1:3] == (224, 224) and 'ConvNext2' in hparams['backbone']:
+        return small_net.ConvNext2(input_shape, hparams)
     elif input_shape[1:3] == (224, 224) and 'ConvNext' in hparams['backbone']:
         return small_net.ConvNext(input_shape, hparams)
     elif input_shape[1:3] == (224, 224) and 'RegNetY' in hparams['backbone']:

@@ -26,12 +26,12 @@ def _hparams(algorithm, dataset, random_seed):
 
     # Unconditional hparam definitions.
 
-    _hparam('data_augmentation', True, lambda r: True)
+    _hparam('data_augmentation', False, lambda r: True)
     _hparam('resnet18', False, lambda r: False)
     _hparam('backbone', 'resnet50', lambda r: 'resnet50')
     _hparam('resnet_dropout', 0., lambda r: r.choice([0.0, 0.1, 0.5]))
     _hparam('class_balanced', False, lambda r: False)
-    _hparam('nonlinear_classifier', False, lambda r: False)
+    _hparam('nonlinear_classifier', True, lambda r: False)
     # _hparam('nonlinear_classifier', False, lambda r: bool(r.choice([False, True])))
 
     # Algorithm-specific hparam definitions. Each block of code below
