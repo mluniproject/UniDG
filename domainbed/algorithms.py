@@ -465,9 +465,43 @@ class Inter_domain_adaptation(Mixup):
                 objective += F.cross_entropy(predictions, y)
             elif unique_labels.shape[0] == 4:
                 reverse_x = torch.flip(x, [0])
+                random_index = torch.randperm(len(y))
+                permuted_x = x[random_index]
+                permuted_y = y[random_index]
                 mixed_x = Inter_domain_adaptation.blend(alpha, x, reverse_x)
-                predictions = self.predict(x)
+                mixed_x = Inter_domain_adaptation.blend(alpha, x, permuted_x)
+                predictions = self.predict(mixed_x)
                 objective += F.cross_entropy(predictions, y)
+                objective += (1-alpha)*F.cross_entropy(predictions, y) + (alpha*F.cross_entropy(predictions, permuted_y))
+            elif unique_labels.shape[0] == 3:
+                weighted_x1 = Inter_domain_adaptation.blend(alpha, x[original_indices[0]], x[original_indices[1]])
+                weighted_x2 = Inter_domain_adaptation.blend(alpha, x[original_indices[1]], x[original_indices[2]])
+                weighted_x3 = Inter_domain_adaptation.blend(alpha, x[original_indices[2]], x[original_indices[0]])
+                weighted_x4 = Inter_domain_adaptation.blend(alpha, x[original_indices[0]], x[original_indices[2]])
+                if self is not None:
+                    objective += Inter_domain_adaptation.calculate_objective(unique_labels[0], unique_labels[1],
+                                                                             weighted_x1, alpha, self)
+                    objective += Inter_domain_adaptation.calculate_objective(unique_labels[1], unique_labels[2],
+                                                                             weighted_x2, alpha, self)
+                    objective += Inter_domain_adaptation.calculate_objective(unique_labels[2], unique_labels[0],
+                                                                             weighted_x3, alpha, self)
+                    random_int = np.random.randint(1, 4)
+                    match random_int:
+                        case 1:
+                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[0], unique_labels[1],
+                                                                                     weighted_x1, (1 - alpha), self)
+                        case 2:
+                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[1], unique_labels[2],
+                                                                                     weighted_x2, (1 - alpha), self)
+                        case 3:
+                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[2], unique_labels[0],
+                                                                                     weighted_x3, (1 - alpha), self)
+
+
+
+
+
+
             else:
                 weighted_x = Inter_domain_adaptation.blend(alpha, x[original_indices[0]], x[original_indices[1]])
                 labels = unique_labels[:2]
@@ -494,6 +528,8 @@ class Inter_domain_adaptation(Mixup):
 
         objective /= len(minibatches)
         self.optimizer.zero_grad()
+        if not isinstance(objective, torch.Tensor):
+            return {'loss': 0}
         objective.backward()
         self.optimizer.step()
         wandb.log({"loss": objective.item()})
@@ -501,6 +537,17 @@ class Inter_domain_adaptation(Mixup):
 
     def blend(self, first_tensor, second_tensor, alpha=0.5):
         return alpha * first_tensor + (1 - alpha) * second_tensor
+    def calculate_objective(self, y1, y2, weighted_x, alpha=0.5, net=None):
+        if(net is None):
+            return 0
+        prediction = net.predict(weighted_x)
+        objective_1 = alpha * F.cross_entropy(prediction, y1)
+        objective_2 = (1 - alpha) * F.cross_entropy(prediction, y2)
+        return objective_1 + objective_2
+
+
+
+
 
 
 
