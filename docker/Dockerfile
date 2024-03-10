@@ -1,5 +1,5 @@
 # [1] base setting
-FROM nvidia/cuda:10.2-cudnn7-devel
+FROM nvidia/cuda:12.3.1-devel-ubi8
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV HOME /root

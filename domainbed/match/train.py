@@ -7,8 +7,6 @@ import os
 import random
 import sys
 import time
-import uuid
-from itertools import chain
 
 import numpy as np
 import PIL
@@ -17,25 +15,23 @@ import torchvision
 import torch.utils.data
 
 from domainbed import datasets
-from domainbed import hparams_registry
-from domainbed import algorithms
+from domainbed.match import hparams_registry, utils
+from domainbed.match import algorithms
 from domainbed.lib import misc
-from domainbed.lib.fast_data_loader import InfiniteDataLoader, FastDataLoader, DataParallelPassthrough
-from domainbed import model_selection
-from domainbed.lib.query import Q
-import wandb
-
+from domainbed.lib.fast_data_loader import InfiniteDataLoader, FastDataLoader
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description='Domain generalization')
     parser.add_argument('--data_dir', type=str)
     parser.add_argument('--dataset', type=str, default="RotatedMNIST")
-    parser.add_argument('--algorithm', type=str, default="ERM")
+    parser.add_argument('--algorithm', type=str, default="CVAE")
     parser.add_argument('--task', type=str, default="domain_generalization",
-        help='domain_generalization | domain_adaptation')
+        choices=["domain_generalization", "domain_adaptation"])
     parser.add_argument('--hparams', type=str,
         help='JSON-serialized hparams dict')
+    parser.add_argument('--checkpoint_path', type=str, default=None)
     parser.add_argument('--hparams_seed', type=int, default=0,
         help='Seed for random hparams (0 means "default hparams")')
     parser.add_argument('--trial_seed', type=int, default=0,
@@ -43,23 +39,24 @@ if __name__ == "__main__":
         'random_hparams).')
     parser.add_argument('--seed', type=int, default=0,
         help='Seed for everything else')
-    parser.add_argument('--steps', type=int, default=None,
+    parser.add_argument('--steps', type=int, default=10001)
+    parser.add_argument('--checkpoint_freq', type=int, default=5000,
+        help='Checkpoint every N steps. Default is 5k steps.')
+    parser.add_argument('--save_freq', type=int, default=None,
+        help='Save every N steps. Default is dataset-dependent.')
+    parser.add_argument('--match_freq', type=int, default=1000,
+        help='Calculate new match every N steps. Default is dataset-dependent.')
+    parser.add_argument('--start_match_steps', type=int, default=100,
         help='Number of steps. Default is dataset-dependent.')
-    parser.add_argument('--checkpoint_freq', type=int, default=None,
-        help='Checkpoint every N steps. Default is dataset-dependent.')
     parser.add_argument('--test_envs', type=int, nargs='+', default=[0])
     parser.add_argument('--output_dir', type=str, default="train_output")
-    parser.add_argument('--holdout_fraction', type=float, default=0.2)
-    parser.add_argument('--uda_holdout_fraction', type=float, default=0)
+    parser.add_argument('--holdout_fraction', type=float, default=0)
+    parser.add_argument('--uda_holdout_fraction', type=float, default=0,
+        help="For domain adaptation, % of test to use unlabeled for training.")
     parser.add_argument('--skip_model_save', action='store_true')
-    parser.add_argument('--save_model_every_checkpoint', action='store_true')
-    
+    parser.add_argument('--use_gpu', action='store_true')
     args = parser.parse_args()
-    description = str(args.algorithm) +str(args.test_envs)+ str(args.hparams)
-    wandb.init(project="BaseLines", name= description)
 
-    # If we ever want to implement checkpointing, just persist these values
-    # every once in a while, and then load them from disk here.
     start_step = 0
     algorithm_dict = None
 
@@ -87,10 +84,13 @@ if __name__ == "__main__":
             misc.seed_hash(args.hparams_seed, args.trial_seed))
     if args.hparams:
         hparams.update(json.loads(args.hparams))
-    # keys = ["config.yaml"] + args.configs
-    # keys = [open(key, encoding="utf8") for key in keys]
-    # hparams = Config(*keys, default=hparams)
-    # hparams.argv_update(left_argv)
+
+    if args.checkpoint_path is not None:
+        checkpoint = torch.load(args.checkpoint_path)
+        hparams.update(checkpoint["model_hparams"])
+        start_step = checkpoint["start_step"]
+        algorithm_dict = checkpoint['model_dict']
+
     print('HParams:')
     for k, v in sorted(hparams.items()):
         print('\t{}: {}'.format(k, v))
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and args.use_gpu:
         device = "cuda"
     else:
         device = "cpu"
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     # Split each env into an 'in-split' and an 'out-split'. We'll train on
     # each in-split except the test envs, and evaluate on all splits.
-    
+
     # To allow unsupervised domain adaptation experiments, we split each test
     # env into 'in-split', 'uda-split' and 'out-split'. The 'in-split' is used
     # by collect_results.py to compute classification accuracies.  The
@@ -147,18 +147,24 @@ if __name__ == "__main__":
         else:
             in_weights, out_weights, uda_weights = None, None, None
         in_splits.append((in_, in_weights))
-        out_splits.append((out, out_weights))
+        if len(out):
+            out_splits.append((out, out_weights))
         if len(uda):
             uda_splits.append((uda, uda_weights))
+
+    if args.task == "domain_adaptation" and len(uda_splits) == 0:
+        raise ValueError("Not enough unlabeled samples for domain adaptation.")
+    
+    train_only_in_split = [(env, env_weights) for i, (env, env_weights) in enumerate(in_splits)
+                            if i not in args.test_envs]
 
     train_loaders = [InfiniteDataLoader(
         dataset=env,
         weights=env_weights,
         batch_size=hparams['batch_size'],
         num_workers=dataset.N_WORKERS)
-        for i, (env, env_weights) in enumerate(in_splits)
-        if i not in args.test_envs]
-    
+        for (env, env_weights) in train_only_in_split]
+
     uda_loaders = [InfiniteDataLoader(
         dataset=env,
         weights=env_weights,
@@ -188,22 +194,21 @@ if __name__ == "__main__":
         algorithm.load_state_dict(algorithm_dict)
 
     algorithm.to(device)
-    if hasattr(algorithm, 'network'):
-        algorithm.network = DataParallelPassthrough(algorithm.network)
-    else:
-        for m in algorithm.children():
-            m = DataParallelPassthrough(m)
 
     train_minibatches_iterator = zip(*train_loaders)
     uda_minibatches_iterator = zip(*uda_loaders)
     checkpoint_vals = collections.defaultdict(lambda: [])
 
-    steps_per_epoch = min([len(env)/hparams['batch_size'] for env,_ in in_splits])
+    steps_per_epoch = min([len(env)//hparams['batch_size'] for env,_ in train_only_in_split])
 
     n_steps = args.steps or dataset.N_STEPS
-    checkpoint_freq = args.checkpoint_freq or dataset.CHECKPOINT_FREQ
-
-    def save_checkpoint(filename):
+    checkpoint_freq = args.checkpoint_freq
+    save_freq = args.save_freq or dataset.CHECKPOINT_FREQ
+    match_freq = args.match_freq or max(steps_per_epoch, checkpoint_freq)
+    start_match_steps = args.start_match_steps or max(steps_per_epoch, checkpoint_freq)
+    print("rematch frequency: ", match_freq, " steps")
+    
+    def save_checkpoint(filename, cf_ids_ps, start_step):
         if args.skip_model_save:
             return
         save_dict = {
@@ -212,13 +217,18 @@ if __name__ == "__main__":
             "model_num_classes": dataset.num_classes,
             "model_num_domains": len(dataset) - len(args.test_envs),
             "model_hparams": hparams,
-            "model_dict": algorithm.cpu().state_dict()
+            "model_dict": algorithm.state_dict(),
+            "cf_ids_ps": cf_ids_ps,
+            "start_step": start_step
         }
         torch.save(save_dict, os.path.join(args.output_dir, filename))
 
-
+    start_time = time.time()
+    
     last_results_keys = None
+    cf_ids_ps = []
     for step in range(start_step, n_steps):
+        
         step_start_time = time.time()
         minibatches_device = [(x.to(device), y.to(device))
             for x,y in next(train_minibatches_iterator)]
@@ -228,12 +238,14 @@ if __name__ == "__main__":
         else:
             uda_device = None
         step_vals = algorithm.update(minibatches_device, uda_device)
+
         checkpoint_vals['step_time'].append(time.time() - step_start_time)
 
         for key, val in step_vals.items():
             checkpoint_vals[key].append(val)
 
-        if (step % checkpoint_freq == 0) or (step == n_steps - 1):
+
+        if (step % checkpoint_freq == 0) or (step % save_freq == 0) or (step == n_steps - 1):
             results = {
                 'step': step,
                 'epoch': step / steps_per_epoch,
@@ -241,13 +253,23 @@ if __name__ == "__main__":
 
             for key, val in checkpoint_vals.items():
                 results[key] = np.mean(val)
-
+            
             evals = zip(eval_loader_names, eval_loaders, eval_weights)
             for name, loader, weights in evals:
-                acc = misc.accuracy(algorithm, loader, weights, device)
-                results[name+'_acc'] = acc
-                wandb.log({name+"test_accuracy": acc})
+                env = int(name[3])
+                if env not in args.test_envs:
+                    d = env
+                    for test_env in args.test_envs:
+                        if env > test_env:
+                            d -= 1
+                    mse = utils.eval_mse(algorithm, loader, d, weights, device)
+                    results[name+'_mse'] = mse
+                    if args.algorithm in algorithms.CONDITIANAL_ALGS:
+                        acc = utils.eval_acc(algorithm, loader, weights, 
+                                dataset.num_classes, d, device)
+                        results[name+'_acc'] = acc
 
+            results['mem_gb'] = torch.cuda.max_memory_allocated() / (1024.*1024.*1024.)
 
             results_keys = sorted(results.keys())
             if results_keys != last_results_keys:
@@ -258,9 +280,8 @@ if __name__ == "__main__":
 
             results.update({
                 'hparams': hparams,
-                'args': vars(args)    
+                'args': vars(args)
             })
-            wandb.log({"parameter_table": str(vars(args))})
 
             epochs_path = os.path.join(args.output_dir, 'results.jsonl')
             with open(epochs_path, 'a') as f:
@@ -270,20 +291,24 @@ if __name__ == "__main__":
             start_step = step + 1
             checkpoint_vals = collections.defaultdict(lambda: [])
 
-            records = []
-            with open(epochs_path, 'r') as f:
-                for line in f:
-                    records.append(json.loads(line[:-1]))
-            records = Q(records)
-            scores = records.map(model_selection.IIDAccuracySelectionMethod._step_acc)
-            if scores[-1] == scores.argmax('val_acc'):
-                save_checkpoint('IID_best.pkl')
-                algorithm.to(device)
-            
-            if args.save_model_every_checkpoint:
-                save_checkpoint(f'model_step{step}.pkl')          
-    save_checkpoint('model.pkl')
-    wandb.finish()
+            save_checkpoint('model.pkl', cf_ids_ps, start_step)
+
+    if args.dataset not in ['RotatedMNIST', 'ColoredMNIST', 'ColoredMNIST_10class']:
+        match_start_time = time.time()
+        train_datasets = [(env, None) for i, env in enumerate(dataset)
+                                if i not in args.test_envs]
+
+        train_match, _ = utils.wrap_datasets(train_datasets, algorithm, 
+                            dataset.num_classes, batch_size=hparams['batch_size'], 
+                            dist_func=hparams['distance_func'], 
+                            device=device, use_raw_index=True, threshold=False,
+                            topk=hparams['topk'])
+        print("match time: ", time.time() - match_start_time)
+        cf_ids_ps = [d.cf_ids for d, w in train_match]
+
+    save_checkpoint('model.pkl', cf_ids_ps, start_step)
 
     with open(os.path.join(args.output_dir, 'done'), 'w') as f:
         f.write('done')
+    
+    print("total time used: {} min".format((time.time() - start_time)/60))

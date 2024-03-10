@@ -239,10 +239,8 @@ if __name__ == "__main__":
         print("\\section{Experimental results}") 
 
     DATASET_NAME = [
-        'VLCS',
-        'PACS',
-        'OfficeHome',
-        'TerraIncognita'
+        'TerraIncognita',
+
     ]
 
     '''
