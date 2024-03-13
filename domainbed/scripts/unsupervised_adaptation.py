@@ -1,5 +1,5 @@
 # The code is modified from domainbed.scripts.train
-
+import csv 
 import argparse
 from argparse import Namespace
 import collections
@@ -108,16 +108,20 @@ if __name__ == "__main__":
     print(args)
     args.input_dir = args_in.input_dir
     description = str("UniDG") + str(args.input_dir)
-    wandb.init(project="Uni_DG", name=description)
 
     if '-' in args_in.adapt_algorithm:
         args.adapt_algorithm, test_batch_size = args_in.adapt_algorithm.split('-')
         args.test_batch_size = int(test_batch_size)
     else:
         args.adapt_algorithm = args_in.adapt_algorithm
-        args.test_batch_size = 4  # default
+        args.test_batch_size = 32  # default
     
-    base_algo, adapt_dataset, adapt_test_env = args_in.input_dir.split('/')[2], args_in.input_dir.split('/')[-2], args_in.input_dir.split('/')[-1]
+    base_algo, adapt_dataset, adapt_test_env = args_in.input_dir.split('/')[2], args_in.input_dir.split('/')[4], args_in.input_dir.split('/')[5]
+    print(str(base_algo))
+
+    print(str(adapt_dataset))
+
+    print(str(adapt_test_env))
     backbone = eval(args.hparams)['backbone']
     print(backbone)
 
@@ -268,6 +272,8 @@ if __name__ == "__main__":
     train_minibatches_iterator = zip(*train_loaders)
     uda_minibatches_iterator = zip(*uda_loaders)
     checkpoint_vals = collections.defaultdict(lambda: [])
+    description = str("UniDG") + str(args.input_dir)
+    wandb.init(project="Uni_DG", name=description)
 
     # load trained model
     ckpt = torch.load(os.path.join(args.input_dir, 'IID_best.pkl'))
@@ -282,11 +288,18 @@ if __name__ == "__main__":
     for name, loader, weights in evals:
         acc, ent = accuracy_ent(algorithm, loader, weights, device, adapt=None)
         results[name+'_acc'] = acc
-        wandb.log({name + "_acc": acc})
         results[name+'_ent'] = ent
     results_keys = sorted(results.keys())
     misc.print_row(results_keys, colwidth=12)
     misc.print_row([results[key] for key in results_keys], colwidth=12)
+    base_values = [results[key] for key in results_keys]
+    file_path = "/home/kit/anthropomatik/ox4599/base_results.csv"
+    with open(file_path, mode='a', newline='') as file:
+        base_writer = csv.writer(file)
+        row = [adapt_test_env, backbone, str(base_algo)] + base_values
+        base_writer.writerow(row)
+
+
 
     print("\nAfter {}".format(alg_name))
     # Cache the inference results
@@ -362,14 +375,12 @@ if __name__ == "__main__":
         for name, loader, weights in evals:
             acc, ent = accuracy_ent(adapted_algorithm, loader, weights, device, adapt=True)
             results[name+'_acc'] = acc
-            wandb.log({name + "_acc": acc})
             results[name+'_ent'] = ent
             adapted_algorithm.reset()
 
         name, loader, weights = train_loader
         acc, ent = accuracy_ent(adapted_algorithm, loader, weights, device, adapt=True)
         results[name+'_acc'] = acc
-        wandb.log({name + "_acc": acc})
         results[name+'_ent'] = ent
 
         del adapt_hparams['cached_loader']
@@ -380,6 +391,8 @@ if __name__ == "__main__":
             last_results_keys = results_keys
         misc.print_row([results[key] for key in results_keys],
             colwidth=12)
+        print([results[key] for key in results_keys])
+        adapted_values = [results[key] for key in results_keys]
 
         results.update({
             'hparams': hparams,
@@ -390,15 +403,22 @@ if __name__ == "__main__":
         epochs_path = os.path.join(args.output_dir, 'results_{}.jsonl'.format(alg_name))
         with open(epochs_path, 'a') as f:
             f.write(json.dumps(results, sort_keys=True) + "\n")
-        with open(epochs_path, 'r') as file:
+        '''with open(epochs_path, 'r') as file:
+            wandb.init(project="Uni_DG", name=description)
             for line in file:
                 data = json.loads(line)
                 env_pairs = {key: value for key,value in data.items() if key.startswith('env')}
                 wandb.log(env_pairs)
-            wandb.finish()
+            wandb.finish()'''
 
 
     # create done file
+    file_path = "/home/kit/anthropomatik/ox4599/results.csv"
+    with open(file_path, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        row = [adapt_test_env, backbone, str(base_algo)] + [results[key] for key in results_keys]
+        writer.writerow(row)
+
     with open(os.path.join(args.output_dir, 'done_{}'.format(alg_name)), 'w') as f:
         f.write('done')
 
