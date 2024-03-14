@@ -488,14 +488,14 @@ class Inter_domain_adaptation(Mixup):
                     random_int = np.random.randint(1, 4)
                     match random_int:
                         case 1:
-                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[0], unique_labels[1],
-                                                                                     weighted_x1, (1 - alpha), self)
+                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[1], unique_labels[0],
+                                                                                     weighted_x1, (alpha), self)
                         case 2:
-                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[1], unique_labels[2],
-                                                                                     weighted_x2, (1 - alpha), self)
+                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[2], unique_labels[1],
+                                                                                     weighted_x2, (alpha), self)
                         case 3:
-                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[2], unique_labels[0],
-                                                                                     weighted_x3, (1 - alpha), self)
+                            objective += Inter_domain_adaptation.calculate_objective(unique_labels[0], unique_labels[2],
+                                                                                     weighted_x3, (alpha), self)
 
 
 
@@ -523,8 +523,8 @@ class Inter_domain_adaptation(Mixup):
 
                 assert x_gpu.shape == x.shape, " X Shapes are not the same"
                 predictions = self.predict(x_gpu)
-                objective += alpha * F.cross_entropy(predictions, y0_tiled)*0.5
-                objective += (1-alpha) * F.cross_entropy(predictions, y1_tiled)*0.5
+                objective += alpha * F.cross_entropy(predictions, y0_tiled)
+                objective += (1-alpha) * F.cross_entropy(predictions, y1_tiled)
 
         objective /= len(minibatches)
         self.optimizer.zero_grad()
