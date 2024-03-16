@@ -107,7 +107,7 @@ if __name__ == "__main__":
     args = Namespace(**r['args'])
     print(args)
     args.input_dir = args_in.input_dir
-    description = str("UniDG") + str(args.input_dir)
+    description = str("T3A") + str(args.input_dir)
 
     if '-' in args_in.adapt_algorithm:
         args.adapt_algorithm, test_batch_size = args_in.adapt_algorithm.split('-')
@@ -272,8 +272,6 @@ if __name__ == "__main__":
     train_minibatches_iterator = zip(*train_loaders)
     uda_minibatches_iterator = zip(*uda_loaders)
     checkpoint_vals = collections.defaultdict(lambda: [])
-    description = str("UniDG") + str(args.input_dir)
-    wandb.init(project="Uni_DG", name=description)
 
     # load trained model
     ckpt = torch.load(os.path.join(args.input_dir, 'IID_best.pkl'))
@@ -377,11 +375,15 @@ if __name__ == "__main__":
             results[name+'_acc'] = acc
             results[name+'_ent'] = ent
             adapted_algorithm.reset()
+        wandb.init(project="Uni_DG", name=description)
+
 
         name, loader, weights = train_loader
         acc, ent = accuracy_ent(adapted_algorithm, loader, weights, device, adapt=True)
         results[name+'_acc'] = acc
         results[name+'_ent'] = ent
+        wandb.log({name+"test_accuracy": acc})
+
 
         del adapt_hparams['cached_loader']
         results_keys = sorted(results.keys())
@@ -398,7 +400,7 @@ if __name__ == "__main__":
             'hparams': hparams,
             'args': vars(args)    
         })
-        # save file
+        # save filea
 
         epochs_path = os.path.join(args.output_dir, 'results_{}.jsonl'.format(alg_name))
         with open(epochs_path, 'a') as f:
@@ -422,4 +424,4 @@ if __name__ == "__main__":
     with open(os.path.join(args.output_dir, 'done_{}'.format(alg_name)), 'w') as f:
         f.write('done')
 
-        
+    
