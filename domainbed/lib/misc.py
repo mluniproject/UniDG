@@ -7,8 +7,10 @@ Things that don't belong anywhere else
 import hashlib
 import json
 import os
-import sys
-from shutil import copyfile
+import shutil
+import errno
+from datetime import datetime
+from collections import Counter
 
 import numpy as np
 import torch
@@ -94,6 +96,7 @@ def random_pairs_of_minibatches(minibatches):
     pairs = []
 
     for i in range(len(minibatches)):
+        # j = cyclic(i + 1)
         j = i + 1 if i < (len(minibatches) - 1) else 0
 
         xi, yi = minibatches[perm[i]][0], minibatches[perm[i]][1]
@@ -132,55 +135,128 @@ def accuracy(network, loader, weights, device):
 
     return correct / total
 
-def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
-    """Entropy of softmax distribution from logits."""
-    return -(x.softmax(1) * x.log_softmax(1)).sum(1)
+def index_conditional_iterate(skip_condition, iterable, index):
+    for i, x in enumerate(iterable):
+        if skip_condition(i):
+            continue
 
-def accuracy_ent(network, loader, weights, device, adapt=False):
-    correct = 0
-    total = 0
-    weights_offset = 0
-    ent = 0
-    
-    if adapt == False:
-        network.eval()
-    #with torch.no_grad():
-    for x, y in loader:
-        x = x.to(device)
-        y = y.to(device)
-        if adapt is None:
-            p = network(x)
+        if index:
+            yield i, x
         else:
-            p = network(x, adapt)
-        if weights is None:
-            batch_weights = torch.ones(len(p)) # x
-        else:
-            batch_weights = weights[weights_offset: weights_offset + len(x)]
-            weights_offset += len(x)
-        batch_weights = batch_weights.to(device)
-        if len(p) != len(x):
-            y = torch.cat((y,y))
-        if p.size(1) == 1:
-            correct += (p.gt(0).eq(y).float() * batch_weights.view(-1, 1)).sum().item()
-        else:
-            correct += (p.argmax(1).eq(y).float() * batch_weights).sum().item()
-        total += batch_weights.sum().item()
-        ent += softmax_entropy(p).sum().item()
-    if adapt == False:
-        network.train()
+            yield x
 
-    return correct / total, ent / total
 
-class Tee:
-    def __init__(self, fname, mode="a"):
-        self.stdout = sys.stdout
-        self.file = open(fname, mode)
 
-    def write(self, message):
-        self.stdout.write(message)
-        self.file.write(message)
-        self.flush()
 
-    def flush(self):
-        self.stdout.flush()
-        self.file.flush()
+
+class SplitIterator:
+    def __init__(self, test_envs):
+        self.test_envs = test_envs
+
+    def train(self, iterable, index=False):
+        return index_conditional_iterate(lambda idx: idx in self.test_envs, iterable, index)
+
+    def test(self, iterable, index=False):
+        return index_conditional_iterate(lambda idx: idx not in self.test_envs, iterable, index)
+
+
+class AverageMeter:
+    """Computes and stores the average and current value"""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """Reset all statistics"""
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        """Update statistics"""
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+    def __repr__(self):
+        return "{:.3f} (val={:.3f}, count={})".format(self.avg, self.val, self.count)
+
+
+class AverageMeters:
+    def __init__(self, *keys):
+        self.keys = keys
+        for k in keys:
+            setattr(self, k, AverageMeter())
+
+    def resets(self):
+        for k in self.keys:
+            getattr(self, k).reset()
+
+    def updates(self, dic, n=1):
+        for k, v in dic.items():
+            getattr(self, k).update(v, n)
+
+    def __repr__(self):
+        return "  ".join(["{}: {}".format(k, str(getattr(self, k))) for k in self.keys])
+
+    def get_averages(self):
+        dic = {k: getattr(self, k).avg for k in self.keys}
+        return dic
+
+
+def timestamp(fmt="%y%m%d_%H-%M-%S"):
+    return datetime.now().strftime(fmt)
+
+
+def makedirs(path):
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+
+
+def rm(path):
+    """remove dir recursively"""
+    if os.path.isdir(path):
+        shutil.rmtree(path, ignore_errors=True)
+    elif os.path.exists(path):
+        os.remove(path)
+
+
+def cp(src, dst):
+    shutil.copy2(src, dst)
+
+
+def get_lr(optimizer):
+    """Assume that the optimizer has single lr"""
+    lr = optimizer.param_groups[0]["lr"]
+
+    return lr
+
+
+@torch.no_grad()
+def hash_bn(module):
+    summary = []
+    for m in module.modules():
+        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+            w = m.weight.detach().mean().item()
+            b = m.bias.detach().mean().item()
+            rm = m.running_mean.detach().mean().item()
+            rv = m.running_var.detach().mean().item()
+            summary.append((w, b, rm, rv))
+    w, b, rm, rv = [np.mean(col) for col in zip(*summary)]
+
+    return w, b, rm, rv
+
+
+def merge_dictlist(dictlist):
+    """Merge list of dicts into dict of lists, by grouping same key."""
+    ret = {k: [] for k in dictlist[0].keys()}
+    for dic in dictlist:
+        for data_key, v in dic.items():
+            ret[data_key].append(v)
+    return ret
