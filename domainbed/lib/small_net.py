@@ -43,8 +43,8 @@ class ConvNext(torch.nn.Module):
     }
     def __init__(self, input_shape, hparams):
         super().__init__()
-        func = self.KNOWN_MODELS[hparams['backbone']]
-        self.network = func(pretrained=True)
+
+        self.network = timm.models.convnext.convnext_base_in22k(pretrained=True)
         # self.n_outputs = self.network.norm_pre.norm.normalized_shape[0]
         self.n_outputs = 21841
         self.hparams = hparams

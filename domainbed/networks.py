@@ -4,6 +4,7 @@ import os
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models
+import timm
 
 from domainbed.lib import misc
 from domainbed.lib import wide_resnet
@@ -108,6 +109,7 @@ class ResNet(torch.nn.Module):
             self.network = remove_batch_norm_from_resnet(self.network)
 
         # adapt number of channels
+        self.network = timm.models.convnext.convnext_base_in22k(pretrained=True)
         nc = input_shape[0]
         if nc != 3:
             tmp = self.network.conv1.weight.data.clone()
@@ -219,47 +221,9 @@ def Featurizer(input_shape, hparams):
         return MNIST_CNN(input_shape)
     elif input_shape[1:3] == (32, 32):
         return wide_resnet.Wide_ResNet(input_shape, 16, 2, 0.)
-    elif input_shape[1:3] == (224, 224) and hparams['backbone'] in ['resnet50', 'resnet18', 'resnet50-BN', 'resnet18-BN','resnet101']:
-        return ResNet(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'ViT-' in hparams['backbone']:
-        return vision_transformer.ViT2(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and hparams['backbone'] in ['B_16', 'B_32', 'L_16', 'L_32']:
-        return vision_transformer.ViT(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'dino' in hparams['backbone']:
-        return vision_transformer.DINO(input_shape, hparams)
-    # elif input_shape[1:3] == (224, 224) and 'DeiT' in hparams['backbone']:
-    #     return vision_transformer.DeiT(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'HViT' in hparams['backbone']:
-        return vision_transformer.HybridViT(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'Mixer' in hparams['backbone']:
-        return mlp_mixer.MLPMixer(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'BiT' in hparams['backbone']:
-        return big_transfer.BiT(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'MobileNetV3' in hparams['backbone']:
-        return small_net.MobileNetV3(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'EfficientNetV2' in hparams['backbone']:
-        return small_net.EfficientNetV2(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'SwinT' in hparams['backbone']:
-        return vision_transformer.SwinT(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'ConvNext' in hparams['backbone']:
-        return small_net.ConvNext(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'RegNetY' in hparams['backbone']:
-        return small_net.RegNetY(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'CLIP' in hparams['backbone']:
-        return vision_transformer.CLIP(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'Laion2b_L14' in hparams['backbone']:
-        return vision_transformer.Laion2b_L14(input_shape, hparams)
-    elif input_shape[1:3] == (224, 224) and 'FAN' in hparams['backbone']:
-        sub_path = "/new_pretrained_models/fan_hybrid_large/archive/data.pkl"
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        domainbed_dir = os.path.join(current_directory, os.pardir)
-        network_path = os.path.join(domainbed_dir, sub_path)
-
-        network = torch.load(network_path)
-        return network
-        return fan.FAN(input_shape, hparams)
     else:
-        raise NotImplementedError
+        return small_net.ConvNext(input_shape, hparams)
+
 
 
 def Classifier(in_features, out_features, is_nonlinear=False):

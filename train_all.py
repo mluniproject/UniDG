@@ -26,6 +26,8 @@ def main():
     parser.add_argument("--data_dir", type=str, default="datadir/")
     parser.add_argument("--dataset", type=str, default="PACS")
     parser.add_argument("--algorithm", type=str, default="ERM")
+    parser.add_argument('--hparams', type=str,
+                        help='JSON-serialized hparams dict')
     parser.add_argument(
         "--trial_seed",
         type=int,
