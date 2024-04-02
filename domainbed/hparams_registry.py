@@ -1,6 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import numpy as np
+import sys
+print(sys.path)
+sys.path.append('/home/kit/anthropomatik/ox4599/UniDG/domainbed')
+sys.path.append('/home/kit/anthropomatik/ox4599/UniDG')
 from domainbed.lib import misc
 
 def _define_hparam(hparams, hparam_name, default_val, random_val_fn):
