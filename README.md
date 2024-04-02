@@ -1,123 +1,35 @@
-# *Towards Unified and Effective Domain Generalization*
+# *Review of current SOTA Domain Generalization methods*
 
 <div align="center">
     <span class="author-block">
-    <a href="https://invictus717.github.io/" target="_blank">Yiyuan Zhang</a><sup>1,2*</sup>,</span>
-    <span class="author-block">
-    <a href="https://kxgong.github.io/" target="_blank">Kaixiong Gong</a><sup>1,2*</sup>,</span>
-    <span class="author-block">
-    <a href="https://dingxiaohan.xyz/" target="_blank">Xiaohan Ding</a><sup>4</sup>,
-    </span>
-    </br>
-    <a href='http://kpzhang93.github.io/' target='_blank'>Kaipeng Zhang</a><sup>2,†</sup>
-    <span class="author-block">
-    <a href="https://scholar.google.com/citations?user=tGxDe8sAAAAJ&hl=en&oi=ao" target="_blank">Fangrui Lv</a><sup>5</sup>,
-    </span>
-    <span class="author-block">
-    <a href="https://people.eecs.berkeley.edu/~keutzer/" target="_blank">Kurt Keutzer</a><sup>3</sup>,
-    </span>
-    <span class="author-block">
-    <a href="http://people.eecs.berkeley.edu/~xyyue/" target="_blank">Xiangyu Yue</a><sup>1†</sup>
-    </span>
+    <a href="https://mluniproject.github.io/" target="_blank">Niklas Baier</a><sup>1,2*</sup>,</span>
+   
+   
 </div>
 
-<div align="center">
-    <sup>1</sup>
-    <a href='http://mmlab.ie.cuhk.edu.hk/' target='_blank'>Multimedia Lab, The Chinese University of Hong Kong</a>&emsp;
-    </br>
-    <sup>2</sup> <a href='https://github.com/OpenGVLab' target='_blank'>OpenGVLab，Shanghai AI Laboratory 
-    </a>
-    <sup>3</sup> <a href='https://eecs.berkeley.edu/' target='_blank'>UC Berkeley</a>
-    <sup>4</sup> <a href='https://ai.tencent.com/' target='_blank'>Tencent AI Lab</a>
-    <sup>5</sup> <a href='https://ai.tencent.com/' target='_blank'>Tsinghua University</a>
-    </br>
-    <sup>*</sup> Equal Contribution&emsp;
-    <sup>†</sup> Corresponding Authors&emsp;
-</div>
+
 
 -----------------
-[![arXiv](https://img.shields.io/badge/arXiv-2310.10008-b31b1b.svg?style=flat)](https://arxiv.org/abs/2310.10008)
-[![website](https://img.shields.io/badge/Project-Website-brightgreen)](https://invictus717.github.io/Generalization/)
-[![LICENSE](https://img.shields.io/badge/LICENSE-Apache2.0-blue)](https://www.apache.org/licenses/LICENSE-2.0)
-<!-- ![](https://img.shields.io/github/stars/invictus717/UniDG?style=social) -->
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/towards-unified-and-effective-domain/domain-generalization-on-terraincognita)](https://paperswithcode.com/sota/domain-generalization-on-terraincognita?p=towards-unified-and-effective-domain)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/towards-unified-and-effective-domain/domain-generalization-on-office-home)](https://paperswithcode.com/sota/domain-generalization-on-office-home?p=towards-unified-and-effective-domain)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/towards-unified-and-effective-domain/domain-generalization-on-vlcs)](https://paperswithcode.com/sota/domain-generalization-on-vlcs?p=towards-unified-and-effective-domain)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/towards-unified-and-effective-domain/domain-generalization-on-domainnet)](https://paperswithcode.com/sota/domain-generalization-on-domainnet?p=towards-unified-and-effective-domain)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/towards-unified-and-effective-domain/domain-generalization-on-pacs-2)](https://paperswithcode.com/sota/domain-generalization-on-pacs-2?p=towards-unified-and-effective-domain)
-## Highlights ⭐⭐⭐
-- 🚀 ***UniDG* is an effective Test-Time Adaptation scheme. It brings out an average improvement to existing DG methods by `+5.0%` Accuracy on DomainBed benchmarks including PACS, VLCS, OfficeHome, and TerraInc datasets.**
-  
-<p align="center" width="100%">
-<img src="assets/cmp.png"  width="80%" height="50%">
-</p>
-
-- 🚀 ***UniDG* is architecture-agnostic. Unified with 10+ visual backbones including CNN, MLP, and transformer-based models, UniDG can bring out consistent performance enhancement of `+5.4%` average on domain generalization.**
-
-<p align="center" width="100%">
-<img src="assets/backbone.png"  width="80%" height="80%">
-</p>
-
-- 🏆 **Achieved `79.6 mAcc` on PACS , VLCS , OfficeHome, TerraIncognita , and DomainNet datasets.**
 
 ### Abstract
 
-We propose UniDG, a novel and Unified framework for Domain Generalization that is capable of significantly enhancing the out-of-distribution generalization
-performance of foundation models regardless of their architectures. The core
-idea of UniDG is to finetune models during the inference stage, which saves
-the cost of iterative training. Specifically, we encourage models to learn the
-distribution of test data in an unsupervised manner and impose a penalty regarding the updating step of model parameters. The penalty term can effectively reduce the catastrophic forgetting issue as we would like to maximally preserve the valuable knowledge in the original model. Empirically, across 12 visual backbones, including CNN-, MLP-, and Transformer-based models, ranging
-from 1.89M to 303M parameters, UniDG shows an average accuracy improvement of +5.4% on DomainBed. 
+We evaluate several novel DG approaches and see whether we could reproduce the results that were presented by the authors. We used the TerraIncognita Dataset for Verification. As a codebase we used UniDG. We provide a overview of our results.
 
-## Features 🎉🎉🎉
 
-1. 🌟 ***Extensibility***:  we intergrate ***UniDG*** with Domainbed. More networks and algorithms can be built easily with our framework, and UniDG brings out an average improvement of `+5.0%` to existing methods including ERM, CORAL, and MIRO.
+## Our Results
 
-2. 🌟 ***Reproducibility***: all implemented models are trained on various tasks at least three times. Mean±std is provided in the [UniDG paper](https://arxiv.org/abs/2310.10008). *Pretrained models and logs* are available.
+Here is an overview of the reported Results 
 
-3. 🌟 ***Ease of Use***:  we develop tools to charge experimental logs with json files, which can transform results directly into latex:
-
-   ![logs](assets/logs.png)
-
-4. 🌟 ***Visualization Tools***: we provides scripts to easily visualize results by T-SNE and performance curves:
-    * Convergence Curves:
-   
-   ![curves](assets/curves.png)
-
-   * T-SNE Visualization Results:
-
-   ![T-SNE](assets/T-SNE.png)
-
-## Model Zoo for UniDG
-
-We provide pretrained checkpoints with base `ERM` algorithm to reproduce our experimental results conveniently.
-
-*Note that `IID_best.pkl` is the pretrained source model.*
-
-* CORAL Source Models
-
-| Backbone         |                Dataset                | Algorithm |  Base Model  |   Adaptation |                       Google Drive                          |
-| ---------------- | :-----------------------------------: | :-------: | :-------: | :--------: | :----------------------------------------------------------: |
-| ResNet-50        | VLCS \| PACS \| OfficeHome \| TerraInc\| DomainNet |    CORAL    | 64.1 ± 0.1 | 69.3 ± 0.2 | [ckpt](https://drive.google.com/drive/folders/1-Vis3Ge_DhhU10YqsYUU_Y-9KAzKZ92w?usp=drive_link) |
-| Swin Transformer        | VLCS \| PACS \| OfficeHome \| TerraInc |    CORAL    | 77.2 ± 0.1 | 82.5 ± 0.2 | [ckpt](https://drive.google.com/drive/folders/1OKn_wd7pDjoIxhB_G38CkBMUr5MvEAdt?usp=sharing) |
-| ConvNeXt       | VLCS \| PACS \| OfficeHome \| TerraInc\| DomainNet |    CORAL    | 75.1 ± 0.1 | 79.6 ± 0.3 | [ckpt](https://drive.google.com/drive/folders/1xt3J_kfe8pEDZ8CjeX5CCexS5F5owLbP?usp=sharing) |
-
-* ERM Source Models 
-
-| Backbone         |                Dataset                | Algorithm |  Base Model  |   Adaptation |                        Google Drive                          |
-| ---------------- | :-----------------------------------: | :-------: | :-------: | :--------: | :----------------------------------------------------------: | 
-| ResNet-18        | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 63.0 ± 0.0 | 67.2 ± 0.2 |[ckpt](https://drive.google.com/drive/folders/1dF9TsKuLOIU_ii8jfDka4FitXlYGgO8D?usp=share_link) |
-| ResNet-50        | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 67.6 ± 0.0 | 73.1 ± 0.2 | [ckpt](https://drive.google.com/drive/folders/15d8EPsOMmN0q8NHKD6GQA1GfHaxY4jMN?usp=share_link) |
-| ResNet-101       | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 68.1 ± 0.1 | 72.3 ± 0.3 | [ckpt](https://drive.google.com/drive/folders/1TEA46H9JfDGBPhc7cGatYSDuBV63jCoQ?usp=share_link) |
-| Mobilenet V3     | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 58.9 ± 0.0 | 65.3 ± 0.2 | [ckpt](https://drive.google.com/drive/folders/1EJrwFIkihcIubznVeLNYp5UwCWSNqIdv?usp=share_link) |
-| EfficientNet V2  | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 67.2 ± 0.0 | 72.1 ± 0.3 | [ckpt](https://drive.google.com/drive/folders/1a3wwAo4LKiG9BrETw0lkn3mdXtnUQVHU?usp=share_link) |
-| ConvNeXt-B       | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 79.7 ± 0.0 | 83.7 ± 0.1 |[ckpt](https://drive.google.com/drive/folders/1p1b0ZUn8oT-tc9JCb1G8r5E0R7l2zVE6?usp=share_link) |
-| ViT-B16          | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 69.5 ± 0.0 | 75.4 ± 0.2 | [ckpt](https://drive.google.com/drive/folders/1okU78l0POKLg7m1q-c07Xhpd0tGa6Awl?usp=share_link) |
-| ViT-L16          | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 74.1 ± 0.0 | 79.9 ± 0.3 |[ckpt](https://drive.google.com/drive/folders/1EfNN4H1ZQCO6xnOvxRleMgJdMmDXLL-M?usp=share_link) |
-| DeiT             | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 73.5 ± 0.0 | 77.8 ± 0.2 | [ckpt](https://drive.google.com/drive/folders/1XwAfBPCTana7LP8wnp48wzzO-H66nEXB?usp=share_link) |
-| Swin Transformer | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 77.2 ± 0.0 | 81.5 ± 0.3 | [ckpt](https://drive.google.com/drive/folders/1fhp-jXJZU4VORguDupoGTEpKd6TeErS9?usp=share_link) |
-| Mixer-B16        | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 57.2 ± 0.1 | 65.6 ± 0.3 | [ckpt](https://drive.google.com/drive/folders/1myX-InLRTkKYC4akK1LmJeIfcAc5SZ6u?usp=share_link) |
-| Mixer-L16        | VLCS \| PACS \| OfficeHome \| TerraInc |    ERM    | 67.4 ± 0.0 |  73.0 ± 0.2 |[ckpt](https://drive.google.com/drive/folders/1o-T93TscEEe1m9ZZBfpUfslMQ74Mhn9c?usp=share_link) |
+| Algorithm       |                Dataset                |  Backbone  |   Reported_Results |Our_Results               
+| ---------------- | :-----------------------------------: |  :-------: | :----------: | :---------:|
+| ERM+UniDG       | TerraInc | ResNet-50 |52.9 | 55.0 | 
+| ERM+UniDG       | TerraInc | ConvNext |69.6 | 64.52 | 
+| ERM        | TerraInc |  ConvNext | - | 58.3 | 
+| ERM        | TerraInc |  ResNet-50 | 47.2 | 45.15 | 
+| LISA (within one Domain)        | TerraInc |  ResNet-50 | - | 17.15 | 
+| LISA (within one Domain)        | TerraInc |  ConvNext | - | 47.35 | 
+| SIMPLE      | TerraInc|Ensemble|57.0 | 46.49 | 
+| SWAD     | TerraInc| ResNet-50 |50.0 | 50.79| 
 
 
 ## 🔧 Get Started
@@ -125,7 +37,7 @@ We provide pretrained checkpoints with base `ERM` algorithm to reproduce our exp
 Environments Set up
 
 ```sh
-git clone https://github.com/invictus717/UniDG.git && cd UniDG
+git clone https://github.com/mluniproject/UniDG.git && cd UniDG
 conda env create -f UniDG.yaml &&  conda activate UniDG
 ```
 
@@ -136,7 +48,7 @@ python -m domainbed.scripts.download \
        --data_dir=./data
 ```
 
-## ⏳ Training & Test-time adaptation
+## ⏳UniDG- Training & Test-time adaptation
 
 Train a model:
 
@@ -150,7 +62,7 @@ python -m domainbed.scripts.train\
        --output_dir my/pretrain/ERM/resnet50
 ```
 
-*Note that you can download our pretrained checkpoints in the [Model Zoo](https://github.com/invictus717/UniDG#model-zoo-for-unidg).*
+*Note that you can download pretrained checkpoints in the [Model Zoo](https://github.com/invictus717/UniDG#model-zoo-for-unidg).*
 
 Then you can perform self-supervised adaptation:
 
@@ -160,7 +72,7 @@ python -m domainbed.scripts.unsupervised_adaptation \
        --adapt_algorithm=UniDG
 ```
 
-## 📆 Collect Experimental Results
+## 📆UniDG- Collect Experimental Results
 
 Then you can perform self-supervised adaptation:
 
@@ -173,7 +85,7 @@ python -m domainbed.scripts.collect_all_results\
        --latex
 ```
 
-## 📈 Visualization results
+## 📈 UniDG- Visualization results
 
 For T-SNE visualization: 
 
@@ -196,13 +108,65 @@ python -m domainbed.scripts.visualize_curves\
        --adapt_algorithm=UniDG \
        --latex
 ```
+## SIMPLE 
+### Switch Branches
+```
+git switch SIMPLE
+cd SeqML/SIMPLE
+```
+### Saving model predictions
+
+Note that all pretrained models are not fine-tuned, so saving their predictions rather than take inference when needed can save a lot of time. Follow the steps given below to save the predictions of the pretrained models:
+
+**Step 1:** Define the model pool by creating a .txt file that lists the names of the pre-trained models. This repository provides two examples: *'sample_list.txt'* and *'full_list.txt'*. 
 
 
-## Citation
+**Step 2:** Set the path where the pretrained model cache will be saved to by running the following command:
+```
+export TORCH_HOME="./pytorch_pretrained_models/"
+```
 
-If this work is helpful for your research, please consider citing the following BibTeX entry.
+
+**Step 3:** Run the spec.py file with the following parameters to generate the predictions of all of the pretrained models in the model pool defined by the pretrain_model_list:
+```
+python -u spec.py --save_inference_only --dataset domainbed --domainbed_dataset PACS --pretrain_model_list modelpool_list/sample_list.txt --batch_size 256
+```
+
+
+### Running
+To learn the specialized model-sample matching, use the following command as an example for the PACS dataset in DomainBed:
+```
+CUDA_VISIBLE_DEVICES=0 python spec.py --pretrain_model_list modelpool_list/sample_list.txt --dataset domainbed --domainbed_dataset PACS --domainbed_test_env 0'''
 
 ```
+
+## LISA
+### switch Branches
+```
+git switch Mixup
+
+```
+### Run Model
+```
+python -m domainbed.scripts.train       --data_dir=./data     --dataset TerraIncognita  --algorithm Inter_domain_adaptation        --test_env 0 --hparams "{\"backbone\": \"ConvNext\"}"     --output_dir my/pretrain/Inter_domain_adaptation/TerraIncognita/ConvNext/0 --steps 8000
+```
+## SWAD 
+### Switch Branches
+```
+git switch SWAD
+
+```
+
+### Run Methods
+```python train_all.py TR0 --dataset TerraIncognita --deterministic --trial_seed 0 --checkpoint_freq 100 --data_dir /my/datasets/path
+python train_all.py TR1 --dataset TerraIncognita --deterministic --trial_seed 1 --checkpoint_freq 100 --data_dir /my/datasets/path
+python train_all.py TR2 --dataset TerraIncognita --deterministic --trial_seed 2 --checkpoint_freq 100 --data_dir /my/datasets/path
+
+```
+
+## Citation
+We used the work of  
+
 @article{zhang2023unified,
       title={Towards Unified and Effective Domain Generalization}, 
       author={Yiyuan Zhang and Kaixiong Gong and Xiaohan Ding and Kaipeng Zhang and Fangrui Lv and Kurt Keutzer and Xiangyu Yue},
@@ -211,6 +175,43 @@ If this work is helpful for your research, please consider citing the following 
       archivePrefix={arXiv},
       primaryClass={cs.CV}
 }
+@misc{cha_swad_2021,
+	title = {{SWAD}: {Domain} {Generalization} by {Seeking} {Flat} {Minima}},
+	shorttitle = {{SWAD}},
+	url = {http://arxiv.org/abs/2102.08604},
+	urldate = {2024-03-13},
+	publisher = {arXiv},
+	author = {Cha, Junbum and Chun, Sanghyuk and Lee, Kyungjae and Cho, Han-Cheol and Park, Seunghyun and Lee, Yunsung and Park, Sungrae},
+	month = nov,
+	year = {2021},
+	note = {arXiv:2102.08604 [cs]},
+	keywords = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Machine Learning},
+	annote = {Comment: NeurIPS 2021 camera-ready},
+	
+}
+@article{li_simple_2023,
+	title = {{SIMPLE}: {SPECIALIZED} {MODEL}-{SAMPLE} {MATCHING} {FOR} {DOMAIN} {GENERALIZATION}},
+	abstract = {In domain generalization (DG), most existing methods aspire to fine-tune a specific pretrained model through novel DG algorithms. In this paper, we propose an alternative direction, i.e., to efficiently leverage a pool of pretrained models without fine-tuning. Through extensive empirical and theoretical evidence, we demonstrate that (1) pretrained models have possessed generalization to some extent while there is no single best pretrained model across all distribution shifts, and (2) out-of-distribution (OOD) generalization error depends on the fitness between the pretrained model and unseen test distributions. This analysis motivates us to incorporate diverse pretrained models and to dispatch the best matched models for each OOD sample by means of recommendation techniques. To this end, we propose SIMPLE, a specialized model-sample matching method for domain generalization. First, the predictions of pretrained models are adapted to the target domain by a linear label space transformation. A matching network aware of model specialty is then proposed to dynamically recommend proper pretrained models to predict each test sample. The experiments on DomainBed show that our method achieves significant performance improvements (up to 12.2\% for individual dataset and 3.9\% on average) compared to state-of-the-art (SOTA) methods and further achieves 6.1\% gain via enlarging the pretrained model pool. Moreover, our method is highly efficient and achieves more than 1000× training speedup compared to the conventional DG methods with fine-tuning a pretrained model. Code and supplemental materials are available at https://seqml.github.io/simple.},
+	language = {en},
+	author = {Li, Ziyue and Ren, Kan and Jiang, Xinyang and Shen, Yifei and Zhang, Haipeng and Li, Dongsheng},
+	year = {2023},
+	
+}
+@inproceedings{yao_improving_2022,
+	title = {Improving {Out}-of-{Distribution} {Robustness} via {Selective} {Augmentation}},
+	url = {https://proceedings.mlr.press/v162/yao22b.html},
+	abstract = {Machine learning algorithms typically assume that training and test examples are drawn from the same distribution. However, distribution shift is a common problem in real-world applications and can cause models to perform dramatically worse at test time. In this paper, we specifically consider the problems of subpopulation shifts (e.g., imbalanced data) and domain shifts. While prior works often seek to explicitly regularize internal representations or predictors of the model to be domain invariant, we instead aim to learn invariant predictors without restricting the model’s internal representations or predictors. This leads to a simple mixup-based technique which learns invariant predictors via selective augmentation called LISA. LISA selectively interpolates samples either with the same labels but different domains or with the same domain but different labels. Empirically, we study the effectiveness of LISA on nine benchmarks ranging from subpopulation shifts to domain shifts, and we find that LISA consistently outperforms other state-of-the-art methods and leads to more invariant predictors. We further analyze a linear setting and theoretically show how LISA leads to a smaller worst-group error.},
+	language = {en},
+	urldate = {2023-12-06},
+	booktitle = {Proceedings of the 39th {International} {Conference} on {Machine} {Learning}},
+	publisher = {PMLR},
+	author = {Yao, Huaxiu and Wang, Yu and Li, Sai and Zhang, Linjun and Liang, Weixin and Zou, James and Finn, Chelsea},
+	month = jun,
+	year = {2022},
+	note = {ISSN: 2640-3498},
+	pages = {25407--25437},
+}
+
 ```
 
 ## Acknowledge
