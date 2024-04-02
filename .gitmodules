@@ -1,0 +1,3 @@
+[submodule "SeqML"]
+	path = SeqML
+	url = https://github.com/mluniproject/SeqML.git
